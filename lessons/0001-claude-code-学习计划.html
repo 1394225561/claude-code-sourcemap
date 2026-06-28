@@ -1,0 +1,1070 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code 源码学习计划</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            margin-bottom: 3rem;
+        }
+
+        .section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        h2 {
+            color: var(--primary-light);
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h2::before {
+            content: '';
+            width: 4px;
+            height: 1.5rem;
+            background: var(--primary);
+            border-radius: 2px;
+        }
+
+        h3 {
+            color: var(--text);
+            font-size: 1.2rem;
+            margin: 1.5rem 0 1rem;
+        }
+
+        .phase {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.05));
+            border-left: 4px solid var(--primary);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .phase-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .phase-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary-light);
+        }
+
+        .phase-duration {
+            background: var(--primary);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+        }
+
+        .tree {
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 0.9rem;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        .tree-line {
+            padding: 0.25rem 0;
+        }
+
+        .tree-comment {
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        .tree-highlight {
+            color: var(--success);
+            font-weight: bold;
+        }
+
+        .file-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        .file-table th,
+        .file-table td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .file-table th {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary-light);
+            font-weight: 600;
+        }
+
+        .file-table tr:hover {
+            background: rgba(99, 102, 241, 0.05);
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+        }
+
+        .badge-core { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
+        .badge-service { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .badge-tool { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .badge-ui { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+        .badge-util { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+
+        .checklist {
+            list-style: none;
+        }
+
+        .checklist li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: flex-start;
+            gap: 0.75rem;
+        }
+
+        .checklist li::before {
+            content: '☐';
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+
+        .tip {
+            background: rgba(34, 197, 94, 0.1);
+            border-left: 4px solid var(--success);
+            padding: 1rem 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+
+        .tip-title {
+            color: var(--success);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid var(--warning);
+            padding: 1rem 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+
+        .warning-title {
+            color: var(--warning);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        a {
+            color: var(--primary-light);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .nav {
+            position: fixed;
+            top: 2rem;
+            right: 2rem;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1rem;
+            max-width: 250px;
+        }
+
+        .nav-title {
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--primary-light);
+        }
+
+        .nav a {
+            display: block;
+            padding: 0.25rem 0;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .nav a:hover {
+            color: var(--text);
+        }
+
+        @media (max-width: 768px) {
+            .nav {
+                display: none;
+            }
+
+            body {
+                padding: 1rem;
+            }
+
+            h1 {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-title">快速导航</div>
+        <a href="#overview">项目概览</a>
+        <a href="#architecture">架构设计</a>
+        <a href="#directory">目录结构</a>
+        <a href="#phases">学习阶段</a>
+        <a href="#core-files">核心文件</a>
+        <a href="#tools">工具系统</a>
+        <a href="#services">服务层</a>
+        <a href="#tips">学习建议</a>
+    </nav>
+
+    <div class="container">
+        <h1>Claude Code 源码学习计划</h1>
+        <p class="subtitle">版本 @anthropic-ai/claude-code@2.1.88 | 从入门到精通的完整学习路径</p>
+
+        <!-- 项目概览 -->
+        <section id="overview" class="section">
+            <h2>项目概览</h2>
+            <p>Claude Code 是 Anthropic 开发的 AI 编程助手 CLI 工具，它将 Claude 的能力集成到开发者的终端工作流中。这个项目展示了如何构建一个生产级别的 AI 应用，涵盖了：</p>
+
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1rem; margin-top: 1.5rem;">
+                <div class="phase">
+                    <h3>🎯 核心功能</h3>
+                    <ul>
+                        <li>自然语言代码理解和生成</li>
+                        <li>文件系统操作（读/写/编辑）</li>
+                        <li>Shell 命令执行</li>
+                        <li>Git 集成</li>
+                        <li>MCP 协议支持</li>
+                    </ul>
+                </div>
+
+                <div class="phase">
+                    <h3>🏗️ 架构特点</h3>
+                    <ul>
+                        <li>插件化工具系统</li>
+                        <li>事件驱动架构</li>
+                        <li>React 终端 UI</li>
+                        <li>多模型支持</li>
+                        <li>权限安全模型</li>
+                    </ul>
+                </div>
+
+                <div class="phase">
+                    <h3>📦 技术栈</h3>
+                    <ul>
+                        <li>TypeScript / Node.js</li>
+                        <li>React (Ink) 终端渲染</li>
+                        <li>Anthropic SDK</li>
+                        <li>MCP 协议</li>
+                        <li>Zod 类型验证</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 架构设计 -->
+        <section id="architecture" class="section">
+            <h2>架构设计</h2>
+            <p>Claude Code 采用分层架构设计，每层都有明确的职责：</p>
+
+            <div class="tree">
+<pre>
+┌─────────────────────────────────────────────────────────────┐
+│                     <span class="tree-highlight">Entrypoints (入口层)</span>                      │
+│  cli.tsx → main.tsx → replLauncher.tsx → interactiveHelpers │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│                      <span class="tree-highlight">UI Layer (界面层)</span>                       │
+│         components/ + ink/ + screens/ + outputStyles        │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│                   <span class="tree-highlight">Query Engine (查询引擎)</span>                    │
+│           query.ts + QueryEngine.ts + coordinator/          │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│                    <span class="tree-highlight">Tool System (工具系统)</span>                    │
+│              tools.ts + tools/ (40+ 内置工具)                │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│                   <span class="tree-highlight">Services (服务层)</span>                        │
+│  api/ | mcp/ | analytics/ | compact/ | oauth/ | plugins/   │
+└─────────────────────────────────────────────────────────────┘
+                              ↓
+┌─────────────────────────────────────────────────────────────┐
+│                   <span class="tree-highlight">Utils (工具库)</span>                          │
+│  git/ | shell/ | permissions/ | model/ | settings/ | ...   │
+└─────────────────────────────────────────────────────────────┘
+</pre>
+            </div>
+
+            <h3>数据流</h3>
+            <div class="tree">
+<pre>
+用户输入 → CLI 解析 → REPL 循环 → Query Engine
+    ↓
+消息构建 → API 调用 → 流式响应 → 工具执行
+    ↓
+结果处理 → 上下文更新 → UI 渲染 → 等待下一轮
+</pre>
+            </div>
+        </section>
+
+        <!-- 目录结构 -->
+        <section id="directory" class="section">
+            <h2>项目目录结构</h2>
+            <p>以下是 Claude Code 源码的完整目录结构，标注了每个模块的职责：</p>
+
+            <div class="tree">
+<pre>
+<span class="tree-highlight">restored-src/</span>
+├── <span class="tree-highlight">src/</span>                          <span class="tree-comment"># 主源码目录</span>
+│   ├── <span class="tree-highlight">entrypoints/</span>               <span class="tree-comment"># 入口文件</span>
+│   │   ├── cli.tsx               <span class="tree-comment"># CLI 入口，快速路径处理</span>
+│   │   ├── init.ts               <span class="tree-comment"># 初始化逻辑</span>
+│   │   ├── mcp.ts                <span class="tree-comment"># MCP 服务器入口</span>
+│   │   └── sdk/                  <span class="tree-comment"># SDK 类型定义</span>
+│   │
+│   ├── <span class="tree-highlight">tools/</span>                     <span class="tree-comment"># 工具系统（40+ 工具）</span>
+│   │   ├── AgentTool/            <span class="tree-comment"># 子代理工具</span>
+│   │   ├── BashTool/             <span class="tree-comment"># Shell 命令执行</span>
+│   │   ├── FileEditTool/         <span class="tree-comment"># 文件编辑</span>
+│   │   ├── FileReadTool/         <span class="tree-comment"># 文件读取</span>
+│   │   ├── FileWriteTool/        <span class="tree-comment"># 文件写入</span>
+│   │   ├── GlobTool/             <span class="tree-comment"># 文件模式匹配</span>
+│   │   ├── GrepTool/             <span class="tree-comment"># 内容搜索</span>
+│   │   ├── MCPTool/              <span class="tree-comment"># MCP 工具调用</span>
+│   │   ├── WebFetchTool/         <span class="tree-comment"># 网页获取</span>
+│   │   ├── WebSearchTool/        <span class="tree-comment"># 网页搜索</span>
+│   │   └── ...                   <span class="tree-comment"># 更多工具</span>
+│   │
+│   ├── <span class="tree-highlight">services/</span>                  <span class="tree-comment"># 服务层</span>
+│   │   ├── api/                  <span class="tree-comment"># Claude API 客户端</span>
+│   │   ├── mcp/                  <span class="tree-comment"># MCP 协议实现</span>
+│   │   ├── analytics/            <span class="tree-comment"># 遥测和分析</span>
+│   │   ├── compact/              <span class="tree-comment"># 上下文压缩</span>
+│   │   ├── oauth/                <span class="tree-comment"># OAuth 认证</span>
+│   │   ├── plugins/              <span class="tree-comment"># 插件系统</span>
+│   │   └── lsp/                  <span class="tree-comment"># LSP 集成</span>
+│   │
+│   ├── <span class="tree-highlight">components/</span>                <span class="tree-comment"># React UI 组件</span>
+│   │   ├── PromptInput/          <span class="tree-comment"># 输入框组件</span>
+│   │   ├── messages/             <span class="tree-comment"># 消息显示</span>
+│   │   ├── diff/                 <span class="tree-comment"># Diff 显示</span>
+│   │   ├── permissions/          <span class="tree-comment"># 权限对话框</span>
+│   │   └── ...                   <span class="tree-comment"># 更多组件</span>
+│   │
+│   ├── <span class="tree-highlight">commands/</span>                  <span class="tree-comment"># 斜杠命令（86 个）</span>
+│   │   ├── help/                 <span class="tree-comment"># /help 命令</span>
+│   │   ├── config/               <span class="tree-comment"># /config 命令</span>
+│   │   ├── mcp/                  <span class="tree-comment"># /mcp 命令</span>
+│   │   └── ...                   <span class="tree-comment"># 更多命令</span>
+│   │
+│   ├── <span class="tree-highlight">utils/</span>                     <span class="tree-comment"># 工具库</span>
+│   │   ├── git.ts                <span class="tree-comment"># Git 操作</span>
+│   │   ├── shell.ts              <span class="tree-comment"># Shell 操作</span>
+│   │   ├── permissions/          <span class="tree-comment"># 权限管理</span>
+│   │   ├── model/                <span class="tree-comment"># 模型管理</span>
+│   │   ├── settings/             <span class="tree-comment"># 设置管理</span>
+│   │   └── ...                   <span class="tree-comment"># 更多工具</span>
+│   │
+│   ├── <span class="tree-highlight">state/</span>                     <span class="tree-comment"># 状态管理</span>
+│   ├── <span class="tree-highlight">types/</span>                     <span class="tree-comment"># TypeScript 类型</span>
+│   ├── <span class="tree-highlight">constants/</span>                 <span class="tree-comment"># 常量定义</span>
+│   ├── <span class="tree-highlight">hooks/</span>                     <span class="tree-comment"># React Hooks</span>
+│   ├── <span class="tree-highlight">ink/</span>                       <span class="tree-comment"># Ink 框架扩展</span>
+│   ├── <span class="tree-highlight">skills/</span>                    <span class="tree-comment"># 技能系统</span>
+│   ├── <span class="tree-highlight">tasks/</span>                     <span class="tree-comment"># 后台任务</span>
+│   ├── <span class="tree-highlight">plugins/</span>                   <span class="tree-comment"># 插件加载</span>
+│   └── <span class="tree-highlight">vim/</span>                       <span class="tree-comment"># Vim 模式</span>
+│
+├── main.tsx                      <span class="tree-comment"># 主入口（800KB，核心逻辑）</span>
+├── query.ts                      <span class="tree-comment"># 查询引擎核心</span>
+├── QueryEngine.ts                <span class="tree-comment"># 查询引擎类</span>
+├── Tool.ts                       <span class="tree-comment"># 工具基类定义</span>
+├── tools.ts                      <span class="tree-comment"># 工具注册表</span>
+├── commands.ts                   <span class="tree-comment"># 命令注册表</span>
+└── context.ts                    <span class="tree-comment"># 上下文管理</span>
+</pre>
+            </div>
+        </section>
+
+        <!-- 学习阶段 -->
+        <section id="phases" class="section">
+            <h2>学习阶段</h2>
+
+            <div class="phase">
+                <div class="phase-header">
+                    <span class="phase-title">阶段 1：入门基础</span>
+                    <span class="phase-duration">1-2 周</span>
+                </div>
+                <h3>目标</h3>
+                <p>理解项目整体架构，掌握核心概念和术语</p>
+
+                <h3>学习内容</h3>
+                <ul class="checklist">
+                    <li>阅读本文档，了解项目全貌</li>
+                    <li>研究 <code>entrypoints/cli.tsx</code> - 理解启动流程</li>
+                    <li>研究 <code>entrypoints/init.ts</code> - 理解初始化逻辑</li>
+                    <li>阅读 <code>Tool.ts</code> - 理解工具系统的基础接口</li>
+                    <li>阅读 <code>tools.ts</code> - 理解工具注册机制</li>
+                </ul>
+
+                <h3>关键文件</h3>
+                <table class="file-table">
+                    <thead>
+                        <tr>
+                            <th>文件</th>
+                            <th>大小</th>
+                            <th>职责</th>
+                            <th>优先级</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>entrypoints/cli.tsx</code></td>
+                            <td>~39KB</td>
+                            <td>CLI 入口，快速路径处理</td>
+                            <td><span class="badge badge-core">核心</span></td>
+                        </tr>
+                        <tr>
+                            <td><code>entrypoints/init.ts</code></td>
+                            <td>~15KB</td>
+                            <td>初始化配置和认证</td>
+                            <td><span class="badge badge-core">核心</span></td>
+                        </tr>
+                        <tr>
+                            <td><code>Tool.ts</code></td>
+                            <td>~30KB</td>
+                            <td>工具接口和类型定义</td>
+                            <td><span class="badge badge-core">核心</span></td>
+                        </tr>
+                        <tr>
+                            <td><code>tools.ts</code></td>
+                            <td>~17KB</td>
+                            <td>工具注册和管理</td>
+                            <td><span class="badge badge-core">核心</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="tip">
+                    <div class="tip-title">学习建议</div>
+                    <p>先从入口文件开始，跟着执行流程走。不要试图一次理解所有代码，先抓住主干。</p>
+                </div>
+            </div>
+
+            <div class="phase">
+                <div class="phase-header">
+                    <span class="phase-title">阶段 2：核心引擎</span>
+                    <span class="phase-duration">2-3 周</span>
+                </div>
+                <h3>目标</h3>
+                <p>深入理解 Query Engine 的对话循环和上下文管理</p>
+
+                <h3>学习内容</h3>
+                <ul class="checklist">
+                    <li>研究 <code>query.ts</code> - 对话循环的核心逻辑</li>
+                    <li>研究 <code>QueryEngine.ts</code> - 查询引擎的类设计</li>
+                    <li>理解消息类型和状态管理</li>
+                    <li>学习上下文窗口管理和压缩策略</li>
+                    <li>研究流式响应处理</li>
+                </ul>
+
+                <h3>关键文件</h3>
+                <table class="file-table">
+                    <thead>
+                        <tr>
+                            <th>文件</th>
+                            <th>大小</th>
+                            <th>职责</th>
+                            <th>优先级</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>query.ts</code></td>
+                            <td>~69KB</td>
+                            <td>查询引擎核心逻辑</td>
+                            <td><span class="badge badge-core">核心</span></td>
+                        </tr>
+                        <tr>
+                            <td><code>QueryEngine.ts</code></td>
+                            <td>~47KB</td>
+                            <td>查询引擎类定义</td>
+                            <td><span class="badge badge-core">核心</span></td>
+                        </tr>
+                        <tr>
+                            <td><code>context.ts</code></td>
+                            <td>~6KB</td>
+                            <td>上下文管理</td>
+                            <td><span class="badge badge-core">核心</span></td>
+                        </tr>
+                        <tr>
+                            <td><code>types/message.ts</code></td>
+                            <td>~20KB</td>
+                            <td>消息类型定义</td>
+                            <td><span class="badge badge-core">核心</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <div class="warning">
+                    <div class="warning-title">难点提醒</div>
+                    <p>query.ts 是最复杂的文件之一，包含了对话循环、错误处理、重试逻辑等。建议分段阅读，先理解主流程再看细节。</p>
+                </div>
+            </div>
+
+            <div class="phase">
+                <div class="phase-header">
+                    <span class="phase-title">阶段 3：工具系统</span>
+                    <span class="phase-duration">2-3 周</span>
+                </div>
+                <h3>目标</h3>
+                <p>掌握工具系统的设计和实现，理解每个工具的工作原理</p>
+
+                <h3>学习内容</h3>
+                <ul class="checklist">
+                    <li>研究工具基类 <code>Tool.ts</code> 的完整定义</li>
+                    <li>学习 3-5 个典型工具的实现</li>
+                    <li>理解工具权限系统</li>
+                    <li>研究工具执行流程</li>
+                    <li>学习如何扩展自定义工具</li>
+                </ul>
+
+                <h3>推荐学习的工具</h3>
+                <table class="file-table">
+                    <thead>
+                        <tr>
+                            <th>工具</th>
+                            <th>复杂度</th>
+                            <th>学习价值</th>
+                            <th>建议顺序</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>BashTool</code></td>
+                            <td>中</td>
+                            <td>Shell 执行、沙箱、权限</td>
+                            <td>第 1 个</td>
+                        </tr>
+                        <tr>
+                            <td><code>FileReadTool</code></td>
+                            <td>低</td>
+                            <td>文件操作基础</td>
+                            <td>第 2 个</td>
+                        </tr>
+                        <tr>
+                            <td><code>FileEditTool</code></td>
+                            <td>中</td>
+                            <td>差异匹配、验证</td>
+                            <td>第 3 个</td>
+                        </tr>
+                        <tr>
+                            <td><code>AgentTool</code></td>
+                            <td>高</td>
+                            <td>子代理、并发、隔离</td>
+                            <td>第 4 个</td>
+                        </tr>
+                        <tr>
+                            <td><code>MCPTool</code></td>
+                            <td>高</td>
+                            <td>MCP 协议集成</td>
+                            <td>第 5 个</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="phase">
+                <div class="phase-header">
+                    <span class="phase-title">阶段 4：服务层</span>
+                    <span class="phase-duration">2-3 周</span>
+                </div>
+                <h3>目标</h3>
+                <p>理解服务层的各个模块，掌握 API 调用、认证、插件等机制</p>
+
+                <h3>学习内容</h3>
+                <ul class="checklist">
+                    <li>研究 <code>services/api/</code> - Claude API 客户端</li>
+                    <li>研究 <code>services/mcp/</code> - MCP 协议实现</li>
+                    <li>研究 <code>services/oauth/</code> - 认证流程</li>
+                    <li>研究 <code>services/compact/</code> - 上下文压缩</li>
+                    <li>研究 <code>services/plugins/</code> - 插件系统</li>
+                </ul>
+
+                <h3>服务模块概览</h3>
+                <table class="file-table">
+                    <thead>
+                        <tr>
+                            <th>模块</th>
+                            <th>职责</th>
+                            <th>关键文件</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>api/</code></td>
+                            <td>Claude API 调用、重试、错误处理</td>
+                            <td>client.ts, streaming.ts</td>
+                        </tr>
+                        <tr>
+                            <td><code>mcp/</code></td>
+                            <td>MCP 协议、服务器管理</td>
+                            <td>client.ts, config.ts</td>
+                        </tr>
+                        <tr>
+                            <td><code>oauth/</code></td>
+                            <td>OAuth 2.0 认证流程</td>
+                            <td>oauth.ts, token.ts</td>
+                        </tr>
+                        <tr>
+                            <td><code>compact/</code></td>
+                            <td>上下文压缩和优化</td>
+                            <td>autoCompact.ts, compact.ts</td>
+                        </tr>
+                        <tr>
+                            <td><code>plugins/</code></td>
+                            <td>插件加载和管理</td>
+                            <td>pluginLoader.ts</td>
+                        </tr>
+                        <tr>
+                            <td><code>analytics/</code></td>
+                            <td>遥测和分析</td>
+                            <td>index.ts, sink.ts</td>
+                        </tr>
+                        <tr>
+                            <td><code>tools/</code></td>
+                            <td>工具执行编排</td>
+                            <td>toolOrchestration.ts</td>
+                        </tr>
+                        <tr>
+                            <td><code>tips/</code></td>
+                            <td>提示和建议</td>
+                            <td>tipRegistry.ts</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <div class="tip">
+                    <div class="tip-title">其他服务目录</div>
+                    <p>还包括: AgentSummary, MagicDocs, PromptSuggestion, SessionMemory, autoDream, extractMemories, policyLimits, remoteManagedSettings, settingsSync, teamMemorySync, toolUseSummary</p>
+                </div>
+            </div>
+
+            <div class="phase">
+                <div class="phase-header">
+                    <span class="phase-title">阶段 5：UI 和交互</span>
+                    <span class="phase-duration">1-2 周</span>
+                </div>
+                <h3>目标</h3>
+                <p>理解终端 UI 的渲染机制和用户交互流程</p>
+
+                <h3>学习内容</h3>
+                <ul class="checklist">
+                    <li>研究 Ink 框架的使用</li>
+                    <li>理解组件系统和状态管理</li>
+                    <li>学习消息渲染和 Diff 显示</li>
+                    <li>研究权限对话框和用户交互</li>
+                </ul>
+
+                <h3>关键组件</h3>
+                <ul>
+                    <li><code>components/PromptInput/</code> - 用户输入处理</li>
+                    <li><code>components/messages/</code> - 消息显示</li>
+                    <li><code>components/diff/</code> - 代码差异显示</li>
+                    <li><code>components/permissions/</code> - 权限对话框</li>
+                    <li><code>ink/</code> - Ink 框架扩展</li>
+                </ul>
+            </div>
+
+            <div class="phase">
+                <div class="phase-header">
+                    <span class="phase-title">阶段 6：高级主题</span>
+                    <span class="phase-duration">持续学习</span>
+                </div>
+                <h3>目标</h3>
+                <p>深入高级特性和扩展机制</p>
+
+                <h3>学习内容</h3>
+                <ul class="checklist">
+                    <li>插件开发和扩展机制</li>
+                    <li>技能系统（Skills）</li>
+                    <li>多代理协作（Agent Swarms）</li>
+                    <li>远程模式和云集成</li>
+                    <li>性能优化和调试技巧</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 核心文件详解 -->
+        <section id="core-files" class="section">
+            <h2>核心文件详解</h2>
+
+            <h3>入口文件</h3>
+            <table class="file-table">
+                <thead>
+                    <tr>
+                        <th>文件</th>
+                        <th>大小</th>
+                        <th>职责</th>
+                        <th>关键函数</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>entrypoints/cli.tsx</code></td>
+                        <td>~39KB</td>
+                        <td>CLI 入口，快速路径处理</td>
+                        <td><code>main()</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>main.tsx</code></td>
+                        <td>~800KB</td>
+                        <td>主入口，核心逻辑</td>
+                        <td><code>main()</code>, <code>run()</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>replLauncher.tsx</code></td>
+                        <td>~4KB</td>
+                        <td>REPL 启动器</td>
+                        <td><code>launchRepl()</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>核心引擎</h3>
+            <table class="file-table">
+                <thead>
+                    <tr>
+                        <th>文件</th>
+                        <th>大小</th>
+                        <th>职责</th>
+                        <th>关键类/函数</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>query.ts</code></td>
+                        <td>~69KB</td>
+                        <td>查询循环核心</td>
+                        <td><code>query()</code> (generator)</td>
+                    </tr>
+                    <tr>
+                        <td><code>QueryEngine.ts</code></td>
+                        <td>~47KB</td>
+                        <td>查询引擎类</td>
+                        <td><code>QueryEngine</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>Tool.ts</code></td>
+                        <td>~30KB</td>
+                        <td>工具基类</td>
+                        <td><code>Tool</code>, <code>ToolUseContext</code></td>
+                    </tr>
+                </tbody>
+            </table>
+
+            <h3>状态管理</h3>
+            <table class="file-table">
+                <thead>
+                    <tr>
+                        <th>文件</th>
+                        <th>大小</th>
+                        <th>职责</th>
+                        <th>关键类型</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>state/AppState.tsx</code></td>
+                        <td>~23KB</td>
+                        <td>应用状态管理</td>
+                        <td><code>AppState</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>types/permissions.ts</code></td>
+                        <td>~13KB</td>
+                        <td>权限类型定义</td>
+                        <td><code>PermissionMode</code></td>
+                    </tr>
+                    <tr>
+                        <td><code>types/hooks.ts</code></td>
+                        <td>-</td>
+                        <td>Hook 类型定义</td>
+                        <td>Hook 相关类型</td>
+                    </tr>
+                </tbody>
+            </table>
+            <div class="tip">
+                <div class="tip-title">注意</div>
+                <p><code>types/message.ts</code> 在代码中被引用，但在恢复的源码中不存在。消息类型定义可能在构建时生成或源码恢复不完整。</p>
+            </div>
+        </section>
+
+        <!-- 工具系统 -->
+        <section id="tools" class="section">
+            <h2>工具系统 (40 个工具)</h2>
+            <p>Claude Code 的工具系统是其核心能力之一，允许 AI 执行各种操作：</p>
+
+            <h3>工具分类</h3>
+            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin: 1rem 0;">
+                <div class="phase">
+                    <h4>📁 文件操作</h4>
+                    <ul>
+                        <li>FileReadTool</li>
+                        <li>FileWriteTool</li>
+                        <li>FileEditTool</li>
+                        <li>GlobTool</li>
+                        <li>GrepTool</li>
+                    </ul>
+                </div>
+
+                <div class="phase">
+                    <h4>💻 系统操作</h4>
+                    <ul>
+                        <li>BashTool</li>
+                        <li>PowerShellTool</li>
+                        <li>LSPTool</li>
+                    </ul>
+                </div>
+
+                <div class="phase">
+                    <h4>🤖 代理系统</h4>
+                    <ul>
+                        <li>AgentTool</li>
+                        <li>SendMessageTool</li>
+                        <li>TaskCreateTool</li>
+                        <li>TaskListTool</li>
+                    </ul>
+                </div>
+
+                <div class="phase">
+                    <h4>🌐 网络和集成</h4>
+                    <ul>
+                        <li>WebFetchTool</li>
+                        <li>WebSearchTool</li>
+                        <li>MCPTool</li>
+                        <li>SkillTool</li>
+                    </ul>
+                </div>
+            </div>
+
+            <h3>工具执行流程</h3>
+            <div class="tree">
+<pre>
+1. 用户输入 → AI 模型决策使用工具
+2. 解析工具调用参数
+3. 检查工具权限
+4. 执行工具操作
+5. 处理执行结果
+6. 返回结果给 AI 模型
+7. AI 模型继续对话
+</pre>
+            </div>
+        </section>
+
+        <!-- 服务层 -->
+        <section id="services" class="section">
+            <h2>服务层</h2>
+            <p>服务层提供了各种底层功能支持：</p>
+
+            <h3>服务模块</h3>
+            <table class="file-table">
+                <thead>
+                    <tr>
+                        <th>模块</th>
+                        <th>职责</th>
+                        <th>关键文件</th>
+                        <th>学习难度</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>api/</code></td>
+                        <td>Claude API 客户端</td>
+                        <td>client.ts, streaming.ts, errors.ts</td>
+                        <td>⭐⭐⭐</td>
+                    </tr>
+                    <tr>
+                        <td><code>mcp/</code></td>
+                        <td>MCP 协议实现</td>
+                        <td>client.ts, config.ts, types.ts</td>
+                        <td>⭐⭐⭐⭐</td>
+                    </tr>
+                    <tr>
+                        <td><code>oauth/</code></td>
+                        <td>OAuth 认证</td>
+                        <td>oauth.ts, token.ts</td>
+                        <td>⭐⭐⭐</td>
+                    </tr>
+                    <tr>
+                        <td><code>compact/</code></td>
+                        <td>上下文压缩</td>
+                        <td>autoCompact.ts, compact.ts</td>
+                        <td>⭐⭐⭐⭐</td>
+                    </tr>
+                    <tr>
+                        <td><code>analytics/</code></td>
+                        <td>遥测和分析</td>
+                        <td>index.ts, sink.ts</td>
+                        <td>⭐⭐</td>
+                    </tr>
+                    <tr>
+                        <td><code>plugins/</code></td>
+                        <td>插件系统</td>
+                        <td>pluginLoader.ts</td>
+                        <td>⭐⭐⭐⭐</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- 源码说明 -->
+        <section class="section">
+            <h2>源码说明</h2>
+            <div class="warning">
+                <div class="warning-title">重要提示</div>
+                <p>本学习指南基于从 <code>@anthropic-ai/claude-code@2.1.88</code> 包中恢复的源码。请注意以下几点：</p>
+                <ul>
+                    <li><strong>源码恢复不完整</strong> - 部分文件（如 <code>types/message.ts</code>）在代码中被引用但不存在于恢复的源码中</li>
+                    <li><strong>构建时生成的代码</strong> - 某些类型和常量可能在构建时生成，不会出现在源码中</li>
+                    <li><strong>Feature Flags</strong> - 代码中大量使用 <code>feature()</code> 函数进行功能开关，部分功能可能在外部版本中被禁用</li>
+                    <li><strong>内部 API</strong> - 部分代码标记为 <code>ant-only</code>（Anthropic 内部使用），外部版本不可用</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 学习建议 -->
+        <section id="tips" class="section">
+            <h2>学习建议</h2>
+
+            <div class="tip">
+                <div class="tip-title">循序渐进</div>
+                <p>不要试图一次理解所有代码。先从入口文件开始，跟着执行流程走，逐步深入。</p>
+            </div>
+
+            <div class="tip">
+                <div class="tip-title">动手实践</div>
+                <p>阅读代码时，尝试添加日志、修改参数、运行测试。实践是最好的学习方式。</p>
+            </div>
+
+            <div class="tip">
+                <div class="tip-title">画图总结</div>
+                <p>用流程图、架构图来总结你的理解。这能帮助你发现理解上的漏洞。</p>
+            </div>
+
+            <div class="tip">
+                <div class="tip-title">关注类型</div>
+                <p>TypeScript 的类型定义是理解代码的钥匙。先看类型，再看实现。</p>
+            </div>
+
+            <div class="warning">
+                <div class="warning-title">避免的陷阱</div>
+                <ul>
+                    <li>不要试图记住每一行代码 - 理解设计模式更重要</li>
+                    <li>不要跳过类型定义 - 它们是理解接口的关键</li>
+                    <li>不要忽视测试 - 测试是最好的文档</li>
+                    <li>不要孤立地看代码 - 理解调用关系更重要</li>
+                </ul>
+            </div>
+
+            <h3>推荐学习顺序</h3>
+            <ol>
+                <li><strong>入口流程</strong>: cli.tsx → main.tsx → replLauncher.tsx</li>
+                <li><strong>核心概念</strong>: Tool.ts → tools.ts → context.ts</li>
+                <li><strong>查询引擎</strong>: query.ts → QueryEngine.ts</li>
+                <li><strong>工具实现</strong>: 从简单的 FileReadTool 开始</li>
+                <li><strong>服务层</strong>: api/ → mcp/ → oauth/</li>
+                <li><strong>UI 组件</strong>: components/ → ink/</li>
+                <li><strong>高级特性</strong>: plugins/ → skills/ → tasks/</li>
+            </ol>
+        </section>
+
+        <!-- 下一步 -->
+        <section class="section">
+            <h2>下一步行动</h2>
+            <p>现在你已经了解了 Claude Code 的整体架构和学习路径。建议你：</p>
+
+            <ol>
+                <li><strong>设置开发环境</strong>: 克隆源码，安装依赖，运行测试</li>
+                <li><strong>从入口开始</strong>: 阅读 <code>entrypoints/cli.tsx</code>，理解启动流程</li>
+                <li><strong>跟着执行走</strong>: 使用调试器跟踪代码执行</li>
+                <li><strong>做笔记</strong>: 记录你的理解和问题</li>
+            </ol>
+
+            <div class="tip">
+                <div class="tip-title">准备好了吗？</div>
+                <p>开始你的 Claude Code 源码学习之旅吧！如果有任何问题，随时问我。</p>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

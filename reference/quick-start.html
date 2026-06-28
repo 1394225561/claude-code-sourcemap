@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code 源码快速入门</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        h2 {
+            color: var(--primary-light);
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+        }
+
+        h3 {
+            color: var(--text);
+            font-size: 1.1rem;
+            margin: 1.5rem 0 1rem;
+        }
+
+        code {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 0.9rem;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+        }
+
+        .step {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.1), rgba(99, 102, 241, 0.05));
+            border-left: 4px solid var(--primary);
+            padding: 1.5rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            line-height: 30px;
+            border-radius: 50%;
+            margin-right: 0.5rem;
+        }
+
+        .tip {
+            background: rgba(34, 197, 94, 0.1);
+            border-left: 4px solid var(--success);
+            padding: 1rem 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+
+        .tip-title {
+            color: var(--success);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .warning {
+            background: rgba(245, 158, 11, 0.1);
+            border-left: 4px solid var(--warning);
+            padding: 1rem 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+
+        .warning-title {
+            color: var(--warning);
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        ul, ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        a {
+            color: var(--primary-light);
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+        }
+
+        th, td {
+            padding: 0.75rem 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background: rgba(99, 102, 241, 0.1);
+            color: var(--primary-light);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Claude Code 源码快速入门</h1>
+        <p style="color: var(--text-muted); margin-bottom: 2rem;">10 分钟了解 Claude Code 的核心架构</p>
+
+        <div class="warning">
+            <div class="warning-title">源码说明</div>
+            <p>本指南基于从 <code>@anthropic-ai/claude-code@2.1.88</code> 恢复的源码。部分文件可能缺失或不完整。</p>
+        </div>
+
+        <!-- 第一步 -->
+        <section class="section">
+            <h2>第一步：了解项目结构</h2>
+            <p>Claude Code 是一个 TypeScript 项目，使用 React (Ink) 构建终端 UI。核心目录结构：</p>
+
+            <pre><code>restored-src/
+├── src/                    # 源码目录
+│   ├── entrypoints/        # 入口文件（cli.tsx ~39KB）
+│   ├── tools/              # 工具系统（40 个工具）
+│   ├── services/           # 服务层（20+ 模块）
+│   ├── components/         # UI 组件
+│   ├── commands/           # 斜杠命令（86 个）
+│   ├── utils/              # 工具库
+│   └── types/              # 类型定义
+├── main.tsx                # 主入口（800KB）- main(), run()
+├── query.ts                # 查询引擎 - query() generator
+└── Tool.ts                 # 工具基类</code></pre>
+        </section>
+
+        <!-- 第二步 -->
+        <section class="section">
+            <h2>第二步：理解启动流程</h2>
+            <p>Claude Code 的启动流程如下：</p>
+
+            <div class="step">
+                <span class="step-number">1</span>
+                <strong>CLI 入口</strong> - <code>entrypoints/cli.tsx</code>
+                <p>处理命令行参数，快速路径（如 --version）</p>
+            </div>
+
+            <div class="step">
+                <span class="step-number">2</span>
+                <strong>主入口</strong> - <code>main.tsx</code>
+                <p>加载配置、初始化服务、解析完整参数</p>
+            </div>
+
+            <div class="step">
+                <span class="step-number">3</span>
+                <strong>REPL 启动</strong> - <code>replLauncher.tsx</code>
+                <p>启动交互式命令行循环</p>
+            </div>
+
+            <div class="step">
+                <span class="step-number">4</span>
+                <strong>查询引擎</strong> - <code>query.ts</code>
+                <p>处理用户输入，调用 Claude API，执行工具</p>
+            </div>
+        </section>
+
+        <!-- 第三步 -->
+        <section class="section">
+            <h2>第三步：掌握核心概念</h2>
+
+            <h3>工具系统 (Tool System)</h3>
+            <p>工具是 Claude 可以调用的功能单元。每个工具定义了：</p>
+            <ul>
+                <li><strong>输入 Schema</strong> - 使用 JSON Schema 定义参数</li>
+                <li><strong>执行逻辑</strong> - 工具的具体实现</li>
+                <li><strong>输出格式</strong> - 返回给 AI 的结果</li>
+            </ul>
+
+            <pre><code>// 工具接口示例 (简化版，实际定义更复杂)
+interface Tool {
+  name: string
+  description: string
+  inputSchema: ToolInputJSONSchema
+  call: (input: any, context: ToolUseContext) => Promise&lt;ToolResult&gt;
+  isReadOnly?: () => boolean
+  hasSideEffects?: () => boolean
+  needsPermission?: (input: any) => boolean
+}</code></pre>
+
+            <h3>查询引擎 (Query Engine)</h3>
+            <p>查询引擎管理与 Claude API 的对话循环：</p>
+            <ol>
+                <li>构建消息历史</li>
+                <li>调用 Claude API</li>
+                <li>处理流式响应</li>
+                <li>执行工具调用</li>
+                <li>更新上下文</li>
+                <li>重复直到对话结束</li>
+            </ol>
+
+            <h3>消息类型 (Message Types)</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>类型</th>
+                        <th>描述</th>
+                        <th>来源</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><code>UserMessage</code></td>
+                        <td>用户输入</td>
+                        <td>用户</td>
+                    </tr>
+                    <tr>
+                        <td><code>AssistantMessage</code></td>
+                        <td>AI 响应</td>
+                        <td>Claude API</td>
+                    </tr>
+                    <tr>
+                        <td><code>SystemMessage</code></td>
+                        <td>系统提示</td>
+                        <td>系统</td>
+                    </tr>
+                    <tr>
+                        <td><code>ToolUseMessage</code></td>
+                        <td>工具调用</td>
+                        <td>Claude API</td>
+                    </tr>
+                    <tr>
+                        <td><code>ToolResultMessage</code></td>
+                        <td>工具结果</td>
+                        <td>工具执行</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- 第四步 -->
+        <section class="section">
+            <h2>第四步：开始阅读代码</h2>
+            <p>推荐的阅读顺序：</p>
+
+            <div class="step">
+                <span class="step-number">1</span>
+                <strong>入口文件</strong> - <code>entrypoints/cli.tsx</code>
+                <p>理解启动流程和快速路径处理</p>
+            </div>
+
+            <div class="step">
+                <span class="step-number">2</span>
+                <strong>工具基类</strong> - <code>Tool.ts</code>
+                <p>理解工具系统的接口设计</p>
+            </div>
+
+            <div class="step">
+                <span class="step-number">3</span>
+                <strong>工具注册</strong> - <code>tools.ts</code>
+                <p>理解工具如何被注册和管理</p>
+            </div>
+
+            <div class="step">
+                <span class="step-number">4</span>
+                <strong>简单工具</strong> - <code>tools/FileReadTool/</code>
+                <p>学习一个简单工具的实现</p>
+            </div>
+
+            <div class="step">
+                <span class="step-number">5</span>
+                <strong>查询引擎</strong> - <code>query.ts</code>
+                <p>理解对话循环的核心逻辑</p>
+            </div>
+        </section>
+
+        <!-- 第五步 -->
+        <section class="section">
+            <h2>第五步：动手实践</h2>
+
+            <h3>添加日志</h3>
+            <p>在关键位置添加 console.log，跟踪代码执行：</p>
+            <pre><code>// 在 query.ts 的 processQuery 函数中添加
+console.log('Processing query:', messages.length, 'messages')
+console.log('Using model:', model)</code></pre>
+
+            <h3>修改参数</h3>
+            <p>尝试修改配置参数，观察行为变化：</p>
+            <pre><code>// 在 context.ts 中修改默认上下文窗口大小
+const DEFAULT_CONTEXT_WINDOW = 100000  // 尝试改为 50000</code></pre>
+
+            <h3>运行测试</h3>
+            <p>运行现有测试，理解测试如何验证功能：</p>
+            <pre><code># 运行所有测试
+npm test
+
+# 运行特定测试
+npm test -- --grep "FileReadTool"</code></pre>
+
+            <div class="tip">
+                <div class="tip-title">实践建议</div>
+                <p>不要只是阅读代码，要动手修改和运行。这是理解代码的最快方式。</p>
+            </div>
+        </section>
+
+        <!-- 常见问题 -->
+        <section class="section">
+            <h2>常见问题</h2>
+
+            <div class="warning">
+                <div class="warning-title">Q: main.tsx 太大了，怎么读？</div>
+                <p>A: main.tsx 有 800KB，确实很大。建议：</p>
+                <ul>
+                    <li>先看函数名和类名，了解整体结构</li>
+                    <li>使用 IDE 的大纲视图快速导航</li>
+                    <li>关注 <code>runClaudeCode()</code> 主函数</li>
+                    <li>其他函数可以在需要时再深入</li>
+                </ul>
+            </div>
+
+            <div class="warning">
+                <div class="warning-title">Q: 如何理解工具执行流程？</div>
+                <p>A: 工具执行流程：</p>
+                <ol>
+                    <li>AI 模型返回 tool_use 响应</li>
+                    <li>Query Engine 解析工具调用</li>
+                    <li>检查工具权限</li>
+                    <li>执行工具</li>
+                    <li>返回 tool_result</li>
+                    <li>继续对话</li>
+                </ol>
+            </div>
+
+            <div class="warning">
+                <div class="warning-title">Q: 有哪些重要的设计模式？</div>
+                <p>A: Claude Code 使用了多种设计模式：</p>
+                <ul>
+                    <li><strong>插件模式</strong> - 工具、技能、插件都是可扩展的</li>
+                    <li><strong>观察者模式</strong> - 事件驱动的状态更新</li>
+                    <li><strong>策略模式</strong> - 不同的权限模式、模型策略</li>
+                    <li><strong>工厂模式</strong> - 工具和消息的创建</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- 下一步 -->
+        <section class="section">
+            <h2>下一步</h2>
+            <p>现在你已经了解了 Claude Code 的核心架构。接下来可以：</p>
+            <ol>
+                <li>阅读 <a href="0001-claude-code-学习计划.html">完整学习计划</a></li>
+                <li>查看 <a href="glossary.html">术语表</a> 了解详细定义</li>
+                <li>从 <code>entrypoints/cli.tsx</code> 开始深入学习</li>
+            </ol>
+
+            <div class="tip">
+                <div class="tip-title">准备好开始了吗？</div>
+                <p>打开源码，从入口文件开始你的学习之旅吧！</p>
+            </div>
+        </section>
+    </div>
+</body>
+</html>

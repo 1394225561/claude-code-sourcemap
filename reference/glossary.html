@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Claude Code 术语表</title>
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-light: #818cf8;
+            --bg: #0f172a;
+            --bg-card: #1e293b;
+            --text: #e2e8f0;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --success: #22c55e;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Noto Sans SC', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            padding: 2rem;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--primary-light), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 1rem;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+        }
+
+        .section {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        h2 {
+            color: var(--primary-light);
+            font-size: 1.3rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--border);
+        }
+
+        .glossary-item {
+            padding: 1rem 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .glossary-item:last-child {
+            border-bottom: none;
+        }
+
+        .term {
+            font-weight: 600;
+            color: var(--primary-light);
+            font-size: 1.1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .definition {
+            color: var(--text);
+            margin-bottom: 0.5rem;
+        }
+
+        .example {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            font-family: 'Cascadia Code', 'Fira Code', monospace;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 0.5rem;
+        }
+
+        .related {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 0.5rem;
+        }
+
+        .related a {
+            color: var(--primary-light);
+            text-decoration: none;
+        }
+
+        .related a:hover {
+            text-decoration: underline;
+        }
+
+        .search-box {
+            width: 100%;
+            padding: 0.75rem 1rem;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-size: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .search-box:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .category-badge {
+            display: inline-block;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        .badge-arch { background: rgba(168, 85, 247, 0.2); color: #a855f7; }
+        .badge-tool { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
+        .badge-service { background: rgba(59, 130, 246, 0.2); color: #3b82f6; }
+        .badge-ui { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+        .badge-concept { background: rgba(236, 72, 153, 0.2); color: #ec4899; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Claude Code 术语表</h1>
+        <p class="subtitle">源码中常见术语和概念的定义</p>
+
+        <input type="text" class="search-box" placeholder="搜索术语..." id="search">
+
+        <!-- 架构术语 -->
+        <section class="section">
+            <h2>架构术语</h2>
+
+            <div class="glossary-item">
+                <div class="term">Entrypoint <span class="category-badge badge-arch">架构</span></div>
+                <div class="definition">应用程序的入口点，负责启动和初始化。Claude Code 有多个入口点用于不同场景（CLI、MCP 服务器、SDK 等）。</div>
+                <div class="example">entrypoints/cli.tsx - CLI 模式入口</div>
+                <div class="related">相关: <a href="#main">Main</a>, <a href="#repl">REPL</a></div>
+            </div>
+
+            <div class="glossary-item">
+                <div class="term">Main <span class="category-badge badge-arch">架构</span></div>
+                <div class="definition">主入口文件 (main.tsx)，包含了 Claude Code 的核心初始化逻辑、命令行参数解析、配置加载等。这是最大的文件（~800KB）。</div>
+                <div class="example">main.tsx: runClaudeCode() 函数</div>
+                <div class="related">相关: <a href="#entrypoint">Entrypoint</a>, <a href="#repl">REPL</a></div>
+            </div>
+
+            <div class="glossary-item">
+                <div class="term">REPL <span class="category-badge badge-arch">架构</span></div>
+                <div class="definition">Read-Eval-Print Loop，交互式命令行循环。Claude Code 的主交互模式，持续读取用户输入、处理、输出结果。</div>
+                <div class="example">replLauncher.tsx: launchRepl()</div>
+                <div class="related">相关: <a href="#query-engine">Query Engine</a></div>
+            </div>
+
+            <div class="glossary-item">
+                <div class="term">Query Engine <span class="category-badge badge-arch">架构</span></div>
+                <div class="definition">查询引擎，负责管理与 Claude API 的对话循环。处理消息发送、响应流、工具调用、错误重试等核心逻辑。</div>
+                <div class="example">query.ts: processQuery() 函数</div>
+                <div class="related">相关: <a href="#tool">Tool</a>, <a href="#message">Message</a></div>
+            </div>
+        </section>
+
+        <!-- 工具系统术语 -->
+        <section class="section">
+            <h2>工具系统术语</h2>
+
+            <div class="glossary-item">
+                <div class="term">Tool <span class="category-badge badge-tool">工具</span></div>
+                <div class="definition">工具是 Claude 可以调用的功能单元。每个工具定义了输入 schema、执行逻辑和输出格式。工具系统是 Claude Code 的核心扩展点。</div>
+                <div class="example">Tool.ts: Tool 接口定义</div>
+                <div class="related">相关: <a href="#tool-use">Tool Use</a>, <a href="#tool-result">Tool Result</a></div>
+            </div>
+
+            <div class="glossary-item">
+                <div class="term">Tool Use <span class="category-badge badge-tool">工具</span></div>
+                <div class="definition">工具调用，指 AI 模型决定使用某个工具并传入参数的过程。在 API 响应中以 tool_use block 形式出现。</div>
+                <div class="example">{ type: 'tool_use', name: 'Bash', input: { command: 'ls' } }</div>
+                <div class="related">相关: <a href="#tool">Tool</a>, <a href="#tool-result">Tool Result</a></div>
+            </div>
+
+            <div class="glossary-item">
+                <div class="term">Tool Result <span class="category-badge badge-tool">工具</span></div>
+                <div class="definition">工具执行结果，包含工具执行的输出。需要发送回 API 以继续对话。</div>
+                <div class="example">{ type: 'tool_result', tool_use_id: '...', content: '...' }</div>
+                <div class="related">相关: <a href="#tool-use">Tool Use</a></div>
+            </div>
+
+            <div class="glossary-item">
+                <div class="term">Tool Permission <span class="category-badge badge-tool">工具</span></div>
+                <div class="definition">工具权限系统，控制哪些工具可以被调用，以及在什么条件下可以执行。支持多种权限模式（自动、手动、计划模式等）。</div>
+                <div class="example">utils/permissions/PermissionMode.ts</div>
+                <div class="related">相关: <a href="#permission-mode">Permission Mode</a></div>
+            </div>
+
+            <div class="glossary-item">
+                <div class="term">Agent Tool <span class="category-badge badge-tool">工具</span></div>
+                <div class="definition">子代理工具，允许创建独立的 AI 代理来处理复杂任务。支持并行执行、工作隔离等高级特性。</div>
+                <div class="example">tools/AgentTool/AgentTool.ts</div>
+                <div class="related">相关: <a href="#subagent">Subagent</a>, <a href="#task">Task</a></div>
+            </div>
+        </section>
+
+        <!-- 服务层术语 -->
+        <section class="section">
+            <h2>服务层术语</h2>
+
+            <div class="glossary-item">
+                <div class="term">MCP <span class="category-badge badge-service">服务</span></div>
+                <div class="definition">Model Context Protocol，模型上下文协议。一种标准协议，用于连接 AI 模型与外部工具和数据源。Claude Code 通过 MCP 支持扩展工具。</div>
+                <div class="example">services/mcp/client.ts</div>
+                <div class="related">相关: <a href="#mcp-server">MCP Server</a>, <a href="#mcp-tool">MCP Tool</a></div>
+            </div>
+
+            <div class="glossary-item">
+                <div class="term">Compact <span class="category-badge badge-service">服务</span></div>
+                <div class="definition">上下文压缩，当对话历史超过上下文窗口限制时，自动或手动压缩历史消息以节省 token。</div>
+                <div class="example">services/compact/autoCompact.ts</div>
+                <div class="related">相关: <a href="#context-window">Context Window</a></div>
+            </div>
+
+            <div class="glossary-item">
+                <div class="term">OAuth <span class="category-badge badge-service">服务</span></div>
+                <div class="definition">Open Authorization，开放授权协议。Claude Code 使用 OAuth 进行用户认证和 API 访问授权。</div>
+                <div class="example">services/oauth/oauth.ts</div>
+                <div class="related">相关: <a href="#authentication">Authentication</a></div>
+            </div>
+
+            <div class="glossary-item">
+                <div class="term">Plugin <span class="category-badge badge-service">服务</span></div>
+                <div class="definition">插件系统，允许扩展 Claude Code 的功能。插件可以提供新的工具、命令、技能等。</div>
+                <div class="example">services/plugins/pluginLoader.ts</div>
+                <div class="related">相关: <a href="#skill">Skill</a></div>
+            </div>
+
+            <div class="glossary-item">
+                <div class="term">Analytics <span class="category-badge badge-service">服务</span></div>
+                <div class="definition">遥测和分析系统，收集使用数据以改进产品。支持多种分析后端（GrowthBook 等）。</div>
+                <div class="example">services/analytics/index.ts</div>
+                <div class="related">相关: <a href="#telemetry">Telemetry</a></div>
+            </div>
+        </section>
+
+        <!-- 消息和类型术语 -->
+        <section class="section">
+            <h2>消息和类型术语</h2>
+
+            <div class="glossary-item">
+                <div class="term">Message <span class="category-badge badge-concept">概念</span></div>
+                <div class="definition">消息是对话的基本单元。包括用户消息、助手消息、系统消息、工具调用消息等多种类型。</div>
+                <div class="example">types/message.ts: Message 类型定义</div>
+                <div class="related">相关: <a href="#user-message">User Message</a>, <a href="#assistant-message">Assistant Message</a></div>
+            </div>
+
+            <div class="glossary-item">
+                <div class="term">User Message <span class="category-badge badge-concept">概念</span></div>
+                <div class="definition">用户消息，包含用户输入的文本、图片、文件等内容。</div>
+                <div class="example">{ type: 'user', content: '...' }</div>
+                <div class="related">相关: <a href="#message">Message</a></div>
+            </div>
+
+            <div class="glossary-item">
+                <div class="term">Assistant Message <span class="category-badge badge-concept">概念</span></div>
+                <div class="definition">助手消息，包含 AI 模型的响应，可能包括文本、工具调用等。</div>
+                <div class="example">{ type: 'assistant', content: [...] }</div>
+                <div class="related">相关: <a href="#message">Message</a></div>
+            </div>
+
+            <div class="glossary-item">
+                <div class="term">System Message <span class="category-badge badge-concept">概念</span></div>
+                <div class="definition">系统消息，包含系统提示、上下文信息等。通常用于设置 AI 的行为和能力。</div>
+                <div class="example">{ type: 'system', content: '...' }</div>
+                <div class="related">相关: <a href="#system-prompt">System Prompt</a></div>
+            </div>
+
+            <div class="glossary-item">
+                <div class="term">Context Window <span class="category-badge badge-concept">概念</span></div>
+                <div class="definition">上下文窗口，AI 模型一次能处理的最大 token 数量。Claude Code 需要管理这个限制。</div>
+                <div class="example">utils/context.ts: getContextWindowForModel()</div>
+                <div class="related">相关: <a href="#compact">Compact</a>, <a href="#token">Token</a></div>
+            </div>
+        </section>
+
+        <!-- UI 和交互术语 -->
+        <section class="section">
+            <h2>UI 和交互术语</h2>
+
+            <div class="glossary-item">
+                <div class="term">Ink <span class="category-badge badge-ui">UI</span></div>
+                <div class="definition">React for CLI，一个用 React 组件构建命令行界面的框架。Claude Code 使用 Ink 渲染终端 UI。</div>
+                <div class="example">ink/ 目录</div>
+                <div class="related">相关: <a href="#component">Component</a></div>
+            </div>
+
+            <div class="glossary-item">
+                <div class="term">Component <span class="category-badge badge-ui">UI</span></div>
+                <div class="definition">React 组件，用于构建 UI 的可复用单元。Claude Code 有大量组件用于终端渲染。</div>
+                <div class="example">components/ 目录</div>
+                <div class="related">相关: <a href="#ink">Ink</a></div>
+            </div>
+
+            <div class="glossary-item">
+                <div class="term">Diff <span class="category-badge badge-ui">UI</span></div>
+                <div class="definition">差异显示，用于展示文件修改前后的变化。Claude Code 有专门的 Diff 组件用于代码审查。</div>
+                <div class="example">components/diff/ 目录</div>
+                <div class="related">相关: <a href="#file-edit">File Edit</a></div>
+            </div>
+
+            <div class="glossary-item">
+                <div class="term">Permission Dialog <span class="category-badge badge-ui">UI</span></div>
+                <div class="definition">权限对话框，用于在执行敏感操作前请求用户确认。</div>
+                <div class="example">components/permissions/ 目录</div>
+                <div class="related">相关: <a href="#tool-permission">Tool Permission</a></div>
+            </div>
+        </section>
+
+        <!-- 高级概念 -->
+        <section class="section">
+            <h2>高级概念</h2>
+
+            <div class="glossary-item">
+                <div class="term">Skill <span class="category-badge badge-concept">概念</span></div>
+                <div class="definition">技能，一种可复用的能力模块。技能可以包含提示、工具、工作流等，用于扩展 Claude 的能力。</div>
+                <div class="example">skills/ 目录</div>
+                <div class="related">相关: <a href="#plugin">Plugin</a></div>
+            </div>
+
+            <div class="glossary-item">
+                <div class="term">Task <span class="category-badge badge-concept">概念</span></div>
+                <div class="definition">任务，用于管理后台执行的工作单元。支持创建、查询、停止等操作。</div>
+                <div class="example">tasks/ 目录, TaskCreateTool</div>
+                <div class="related">相关: <a href="#agent-tool">Agent Tool</a></div>
+            </div>
+
+            <div class="glossary-item">
+                <div class="term">Subagent <span class="category-badge badge-concept">概念</span></div>
+                <div class="definition">子代理，由 Agent Tool 创建的独立 AI 实例。子代理有自己的上下文和执行环境。</div>
+                <div class="example">tools/AgentTool/ 目录</div>
+                <div class="related">相关: <a href="#agent-tool">Agent Tool</a>, <a href="#task">Task</a></div>
+            </div>
+
+            <div class="glossary-item">
+                <div class="term">Hook <span class="category-badge badge-concept">概念</span></div>
+                <div class="definition">钩子，允许在特定事件发生时执行自定义逻辑。Claude Code 支持多种钩子类型。</div>
+                <div class="example">hooks/ 目录</div>
+                <div class="related">相关: <a href="#plugin">Plugin</a></div>
+            </div>
+
+            <div class="glossary-item">
+                <div class="term">Telemetry <span class="category-badge badge-concept">概念</span></div>
+                <div class="definition">遥测，收集使用数据用于分析和改进。包括错误报告、性能指标、功能使用情况等。</div>
+                <div class="example">utils/telemetry/ 目录</div>
+                <div class="related">相关: <a href="#analytics">Analytics</a></div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // 简单的搜索功能
+        const searchInput = document.getElementById('search');
+        const items = document.querySelectorAll('.glossary-item');
+
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.toLowerCase();
+
+            items.forEach(item => {
+                const term = item.querySelector('.term').textContent.toLowerCase();
+                const definition = item.querySelector('.definition').textContent.toLowerCase();
+
+                if (term.includes(query) || definition.includes(query)) {
+                    item.style.display = 'block';
+                } else {
+                    item.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
