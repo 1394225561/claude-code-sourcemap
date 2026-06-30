@@ -1,0 +1,57 @@
+# ========== 依赖 ==========
+node_modules/
+
+# ========== 构建产物 ==========
+dist/
+build/
+*.tsbuildinfo
+
+# ========== 环境变量 ==========
+.env
+.env.local
+.env.*.local
+
+# ========== IDE ==========
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ========== MCP 工具 ==========
+.playwright-mcp/
+.superpowers/
+
+# ========== 系统文件 ==========
+.DS_Store
+Thumbs.db
+
+# ========== 日志 ==========
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ========== 测试覆盖率 ==========
+coverage/
+
+# ========== 临时文件 ==========
+*.tmp
+*.bak
+*.cache
+
+# ========== 压缩包 ==========
+*.zip
+*.tar.gz
+*.tgz
+
+# ========== TypeScript/Vite 缓存 ==========
+.vite/
+
+# ========== ESLint/Prettier 缓存 ==========
+.eslintcache
+.prettiercache
+
+# ========== Vue 缓存 ==========
+*.vue.compiled
